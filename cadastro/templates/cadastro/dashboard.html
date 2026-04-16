@@ -1,0 +1,70 @@
+{% extends "cadastro/base.html" %}
+
+{% block title %}Dashboard - Amor de Papelaria{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">Bem-vindo ao Painel de Gerenciamento!</h2>
+        <p class="lead">Escolha uma das opções abaixo para começar a gerenciar sua papelaria.</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Card: Clientes -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">Clientes</h5>
+                <p class="card-text">Gerencie o cadastro de seus clientes.</p>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'lista_clientes' %}" class="btn btn-primary">Ver Todos os Clientes</a>
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'cadastro_cliente_pf' %}" class="btn btn-outline-primary">Novo Cliente PF</a>
+                        <a href="{% url 'cadastro_cliente_pj' %}" class="btn btn-outline-primary">Novo Cliente PJ</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card: Produtos -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">Produtos e Categorias</h5>
+                <p class="card-text">Gerencie todo o seu catálogo em um só lugar.</p>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'lista_produtos' %}" class="btn btn-success">Gerenciar Catálogo</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card: Vendas -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">Vendas</h5>
+                <p class="card-text">Registre e consulte o histórico completo de suas vendas.</p>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'lista_vendas' %}" class="btn btn-warning">Ver Todas as Vendas</a>
+                    <a href="{% url 'cadastro_venda' %}" class="btn btn-outline-warning">Registrar Nova Venda</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div class="row mt-4">
+    <!-- Card: Relatórios -->
+    <div class="col-12 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <h5 class="card-title">Relatórios e Gráficos</h5>
+                <p class="card-text">Visualize dados importantes sobre suas vendas e clientes.</p>
+                <a href="{% url 'graficos' %}" class="btn btn-outline-info">Ver Gráficos</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

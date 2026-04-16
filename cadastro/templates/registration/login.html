@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <!-- Configuração para responsividade e visualização da página conforme largura do aparelho e estipula que a escala seja com zoom inicial de 1:1. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Amor de Papelaria</title>
+</head>
+
+<body style="margin: 0; padding: 0; background-color: #f8f9fa; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+
+    <!-- Container Principal (Card de Login) -->
+    <div style="background-color: #ffffff; padding: 40px; border-radius: 15px; box-shadow: 0 4px 15px #00000059; width: 100%; max-width: 350px; text-align: center;">
+        
+        <h2 style="color: #0e0d0d; margin-top: 0; margin-bottom: 25px; font-weight: 600;">Faça seu login</h2>
+        
+        <form method="post" style="display: flex; flex-direction: column; gap: 10px;">
+            {% csrf_token %}
+            
+            <div style="text-align: left; color: #0e0d0d;">
+                {{ form.as_p }}
+            </div>
+
+            <button type="submit" style="background-color: #fa1c5e; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px;">
+                Entrar
+            </button>
+        </form>
+
+        {% if form.errors %}
+            <div style="background-color: #ffebee; color: #c62828; padding: 10px; border-radius: 5px; margin-top: 20px; font-size: 14px; border: 1px solid #ef9a9a;">
+                Dados de acesso incorretos. Tente novamente.
+            </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>

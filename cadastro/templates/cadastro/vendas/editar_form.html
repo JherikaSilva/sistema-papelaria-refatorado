@@ -1,0 +1,73 @@
+{% extends "cadastro/base.html" %}
+{% load static %}
+
+{% block title %}{{ titulo }} - Amor de Papelaria{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card">
+            <div class="card-header">
+                <h2>{{ titulo }} #{{ venda_id }}</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" id="venda-form">
+                    {% csrf_token %}
+                    
+                    <!-- Formulário Principal da Venda -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="{{ form.cliente_fisico.id_for_label }}" class="form-label">Cliente (Pessoa Física)</label>
+                            {{ form.cliente_fisico }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.cliente_juridico.id_for_label }}" class="form-label">Cliente (Pessoa Jurídica)</label>
+                            {{ form.cliente_juridico }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.pagamento_metodo.id_for_label }}" class="form-label">Método de Pagamento</label>
+                            {{ form.pagamento_metodo }}
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="{{ form.frete.id_for_label }}" class="form-label">{{ form.frete.label }}</label>
+                            {{ form.frete }}
+                        </div>
+                    </div>
+
+                    <!-- Lista de Itens da Venda (Apenas Leitura) -->
+                    <h4>Itens da Venda (Não Editáveis)</h4>
+                    <div class="table-responsive mb-4">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th class="text-center">Qtd.</th>
+                                    <th class="text-end">Valor Unitário</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in itens_venda %}
+                                <tr>
+                                    <td>{{ item.produto_nome }}</td>
+                                    <td class="text-center">{{ item.quantidade }}</td>
+                                    <td class="text-end">R$ {{ item.preco_unitario|floatformat:2 }}</td>
+                                    <td class="text-end">R$ {{ item.subtotal|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                        <a href="{% url 'lista_vendas' %}" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "cadastro/base.html" %}
+
+{% block title %}{{ titulo }} - Amor de Papelaria{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h2>{{ titulo }}</h2>
+            </div>
+            <div class="card-body">
+                
+                <!-- BLOCO DE ALERTA PARA CATEGORIAS -->
+                {% if not existe_categoria and titulo == 'Novo Produto' %}
+                    <div class="alert alert-warning" role="alert">
+                        <h4 class="alert-heading">Atenção!</h4>
+                        <p>Para cadastrar um produto, é necessário que pelo menos uma <strong>categoria</strong> tenha sido cadastrada no sistema.</p>
+                        <hr>
+                        <p class="mb-0">
+                            <a href="{% url 'cadastro_categoria' %}" class="btn btn-sm btn-warning">Cadastrar uma Categoria Agora</a>
+                        </p>
+                    </div>
+                {% endif %}
+
+                <!-- BLOCO DE MENSAGEM DE SUCESSO -->
+                {% if mensagem_sucesso %}
+                    <div class="alert alert-success" role="alert">
+                        {{ mensagem_sucesso }}
+                    </div>
+                {% endif %}
+
+                <!-- FORMULÁRIO PRINCIPAL -->
+                
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- BLOCO PARA EXIBIR ERROS GERAIS DO FORMULÁRIO -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {% for error in form.non_field_errors %}
+                                <p class="mb-0">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    {% for field in form %}
+                        <!-- DIAGNÓSTICO: Processando campo: {{ field.name }} -->
+                        {% if field.name == 'categorias' %}
+                            <!-- Tratamento especial para a lista de checkboxes de categorias -->
+                            <div class="mb-3">
+                                <label class="form-label">{{ field.label }}</label>
+                                
+                                <div class="d-flex flex-column gap-2">
+                                    {{ field }}
+                                </div>
+                                
+                                {% if field.help_text %}
+                                    <div class="form-text">{{ field.help_text }}</div>
+                                {% endif %}
+                            </div>
+                        {% elif field.field.widget.input_type == 'checkbox' %}
+                            <!-- Tratamento para outros checkboxes simples (como um campo 'ativo') -->
+                            <div class="form-check mb-3">
+                                {{ field }}
+                                <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}</label>
+                                {% if field.help_text %}
+                                    <div class="form-text">{{ field.help_text }}</div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <!-- Bloco padrão para todos os outros campos (texto, select, etc.) -->
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                
+                                {{ field }}
+                                
+                                {% if field.errors %}
+                                    <div class="form-text text-danger">
+                                        {% for error in field.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                {% if field.help_text %}
+                                    <div class="form-text">{{ field.help_text }}</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancelar</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Usa querySelectorAll para pegar o primeiro (e único) elemento relacionado a data.
+    const dateInput = document.querySelectorAll('#id_data_de_nascimento')[0];
+
+    // Verifica se o campo foi encontrado na página.
+    if (dateInput) {
+        // Bloqueia qualquer tentativa de digitar no campo.
+        dateInput.addEventListener('keydown', function(event) {
+            event.preventDefault();
+        });
+
+        // Bloqueia a ação de colar (paste) no campo de data.
+        dateInput.addEventListener('paste', function(event) {
+            event.preventDefault();
+        });
+    }
+});
+</script>
+{% endblock %}

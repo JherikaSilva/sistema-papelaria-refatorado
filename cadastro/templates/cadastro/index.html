@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Inicial - Amor de Papelaria</title>
+</head>
+<body>
+<style>
+        /* Base do Layout */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #0e0d0d;
+        }
+
+        /* Container Principal com o padrão de sombra e bordas do Login */
+        .hero-card {
+            background-color: #ffffff;
+            padding: 50px 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            border-top: 5px solid #fa1c5fce; /* Detalhe na cor primária */
+        }
+
+        /* Títulos e Textos */
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+            color: #0e0d0d;
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 35px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Estilização do Botão (Link) para parecer um botão real */
+        .btn-login {
+            display: inline-block;
+            background-color: #fa1c5e;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 14px 35px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            transition: transform 0.2s, background-color 0.2s;
+            box-shadow: 0 4px 10px #fa1c5f80;
+        }
+
+        .btn-login:hover {
+            background-color: #d91650;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px #fa1c5e66;
+        }
+
+        .icon-box {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hero-card">
+        <div class="icon-box">💖</div>
+        <h1>Amor de Papelaria</h1>
+        <p>Gestão completa com amor e cuidado!</p>
+
+        <a href="{% url 'login' %}" class="btn-login">
+            Acessar Painel
+        </a>
+    </div>
+</body>
+</html>

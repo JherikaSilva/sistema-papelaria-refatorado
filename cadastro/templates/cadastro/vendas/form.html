@@ -1,0 +1,173 @@
+{% extends "cadastro/base.html" %}
+{% load static %}
+
+{% block title %}{{ titulo }} - Amor de Papelaria{% endblock %}
+
+{% block extra_css %}
+<style>
+    .formset-item { border: 1px solid #dee2e6; padding: 15px; margin-bottom: 10px; border-radius: 5px; }
+    .formset-item .form-control { margin-bottom: 10px; }
+    
+    input[name$="-DELETE"] {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card">
+            <div class="card-header">
+                <h2>{{ titulo }}</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" id="venda-form" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- BLOCO PARA EXIBIR ERROS DE VALIDAÇÃO GERAIS -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {% for error in form.non_field_errors %}
+                                <p class="mb-0">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Formulário Principal da Venda -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="{{ form.cliente_fisico.id_for_label }}" class="form-label">Cliente (Pessoa Física)</label>
+                            {{ form.cliente_fisico.errors }}
+                            {{ form.cliente_fisico }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.cliente_juridico.id_for_label }}" class="form-label">Cliente (Pessoa Jurídica)</label>
+                            {{ form.cliente_juridico.errors }}
+                            {{ form.cliente_juridico }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.pagamento_metodo.id_for_label }}" class="form-label">Método de Pagamento</label>
+                            {{ form.pagamento_metodo.errors }}
+                            {{ form.pagamento_metodo }}
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="{{ form.frete.id_for_label }}" class="form-label">{{ form.frete.label }}</label>
+                            {{ form.frete.errors }}
+                            {{ form.frete }}
+                        </div>
+                    </div>
+
+                    <!-- Formulários dos Itens da Venda -->
+                    <h4>Itens da Venda</h4>
+                    <div id="formset-container">
+                        {{ formset.management_form }}
+                        {% for item_form in formset %}
+                            <div class="formset-item row">
+                                {{ item_form.id }}
+                                <div class="col-md-5">
+                                    <label>Produto</label>
+                                    {{ item_form.produto.errors }}
+                                    {{ item_form.produto }}
+                                </div>
+                                <div class="col-md-2">
+                                    <label>Quantidade</label>
+                                    {{ item_form.quantidade_produto.errors }}
+                                    {{ item_form.quantidade_produto }}
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Valor Unitário</label>
+                                    {{ item_form.preco_unitario.errors }}
+                                    {{ item_form.preco_unitario }}
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="button" class="btn btn-danger btn-sm remove-item">Remover</button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>Valor Total da Venda: R$ <span id="total-geral">0.00</span></h4>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button type="button" id="add-item" class="btn btn-secondary">Adicionar Item</button>
+                            <button type="submit" class="btn btn-primary">Finalizar Venda</button>
+                            <a href="{% url 'lista_vendas' %}" class="btn btn-danger">Cancelar</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/jquery.min.js' %}"></script>
+<script>
+ $(document).ready(function() {
+
+    // --- FUNÇÃO PARA CALCULAR O TOTAL ---
+    function calcularTotal() {
+        let totalItens = 0;
+        $('.formset-item').each(function() {
+            if ($(this).is(':hidden')) return;
+            let qtd = parseFloat($(this).find('input[name*="quantidade_produto"]').val()) || 0;
+            let preco = parseFloat($(this).find('input[name*="preco_unitario"]').val()) || 0;
+            totalItens += qtd * preco;
+        });
+        let frete = parseFloat($('#id_frete').val()) || 0;
+        $('#total-geral').text((totalItens + frete).toFixed(2));
+    }
+
+    // --- CORREÇÃO VÍRGULA/PONTO ---
+    $('#formset-container, #id_frete').on('blur', 'input[name*="preco_unitario"]', function() {
+        let valor = $(this).val();
+        $(this).val(valor.replace(',', '.'));
+    });
+
+    // --- EVENTO DO BOTÃO REMOVER ---
+    $('#formset-container').on('click', '.remove-item', function(e) {
+        e.preventDefault();
+        let itemToRemove = $(this).closest('.formset-item');
+        itemToRemove.find('input[name*="DELETE"]').prop('checked', true);
+        itemToRemove.fadeOut(400, calcularTotal);
+    });
+
+    // --- EVENTO PARA CALCULAR AO DIGITAR ---
+    $('#formset-container, #id_frete').on('input', 'input', calcularTotal);
+
+    // --- EVENTO DO BOTÃO ADICIONAR ---
+    $('#add-item').click(function(e) {
+        e.preventDefault();
+        let totalForms = $('#id_compraclientehasproduto_set-TOTAL_FORMS');
+        let formIdx = parseInt(totalForms.val());
+        
+        let selectOptions = $('#formset-container select[name*="produto"]:first').html();
+        
+        let newFormHtml = `
+            <div class="formset-item row" style="display:none;">
+                <input type="hidden" name="compraclientehasproduto_set-${formIdx}-id" id="id_compraclientehasproduto_set-${formIdx}-id">
+                <input type="hidden" name="compraclientehasproduto_set-${formIdx}-DELETE" id="id_compraclientehasproduto_set-${formIdx}-DELETE">
+                <div class="col-md-5"><label>Produto</label><select name="compraclientehasproduto_set-${formIdx}-produto" class="form-control" id="id_compraclientehasproduto_set-${formIdx}-produto">${selectOptions}</select></div>
+                <div class="col-md-2"><label>Quantidade</label><input type="number" name="compraclientehasproduto_set-${formIdx}-quantidade_produto" value="1" min="1" class="form-control" id="id_compraclientehasproduto_set-${formIdx}-quantidade_produto"></div>
+                <div class="col-md-3"><label>Valor Unitário</label><input type="number" name="compraclientehasproduto_set-${formIdx}-preco_unitario" step="0.01" min="0" placeholder="0.00" class="form-control" id="id_compraclientehasproduto_set-${formIdx}-preco_unitario"></div>
+                <div class="col-md-2 d-flex align-items-end"><button type="button" class="btn btn-danger btn-sm remove-item">Remover</button></div>
+            </div>
+        `;
+        
+        $('#formset-container').append(newFormHtml);
+        $('#formset-container .formset-item:last').fadeIn(400);
+        totalForms.val(formIdx + 1);
+    });
+
+    // Calcula o total quando a página carrega
+    calcularTotal();
+});
+</script>
+{% endblock %}
