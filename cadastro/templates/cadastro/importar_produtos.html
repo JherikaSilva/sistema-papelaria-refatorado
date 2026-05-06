@@ -1,0 +1,27 @@
+
+{% extends "cadastro/base.html" %}
+{% block title %}Importar Produtos{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3>Importação em Massa de Produtos</h3>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Enviar</button>
+            <a href="{% url 'lista_produtos' %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+        <hr>
+        <h5>Formato esperado do arquivo:</h5>
+        <p>Colunas obrigatórias: <code>nome</code>, <code>preco</code>, <code>quantidade</code>.</p>
+        <p>Coluna opcional: <code>categorias</code> (nomes separados por vírgula).</p>
+        <p>Exemplo CSV:</p>
+        <pre>nome,preco,quantidade,categorias
+Caneta BIC Azul,1.50,100,Escrita,Canetas
+Caderno 10 matérias,25.90,50,Cadernos,Escolar
+Lápis Preto,0.80,200,Escrita</pre>
+    </div>
+</div>
+{% endblock %}
