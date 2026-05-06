@@ -1,3 +1,4 @@
+
 from django.db import models
 
 class CategoriaProduto(models.Model):
@@ -15,8 +16,11 @@ class CategoriaProduto(models.Model):
 
 class Produto(models.Model):
     id_produto = models.AutoField(primary_key=True)
-    nome_do_produto = models.CharField(max_length=200, unique=True, verbose_name="Categorias")
+    nome_do_produto = models.CharField(max_length=200, unique=True, verbose_name="Nome do Produto")
     categorias = models.ManyToManyField(CategoriaProduto, related_name='produtos', verbose_name="Categorias")
+    preco = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Preço Unitário (R$)")
+    quantidade_estoque = models.PositiveIntegerField(default=0, verbose_name="Quantidade em Estoque")
+    
     
     class Meta:
         verbose_name = "Produto"
