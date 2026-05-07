@@ -12,6 +12,7 @@ urlpatterns = [
     path("cadastro_cliente/juridica/", views.cadastro_cliente, {'tipo': 'juridica'}, name="cadastro_cliente_pj"),
     path("cadastro_produto/", views.cadastro_produto, name="cadastro_produto"),
     path("cadastro_categoria/", views.cadastro_categoria, name="cadastro_categoria"),
+    path("produtos/importar/", views.importar_produtos, name="importar_produtos"),
     path("cadastro_venda/", views.cadastro_venda, name="cadastro_venda"),
 #Listagens
     path("clientes/", views.lista_clientes, name="lista_clientes"),

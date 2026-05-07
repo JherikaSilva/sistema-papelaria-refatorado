@@ -11,9 +11,12 @@ from django.forms.formsets import formset_factory
 from django.forms import inlineformset_factory
 from django.contrib import messages
 from django.core.management import call_command
-
+import pandas as pd
+from django.db import transaction
+from .forms.importacao import UploadFileForm
 from datetime import date
 import json
+from io import BytesIO
 
 # View da página inicial.
 def index(request):
@@ -457,3 +460,140 @@ def editar_cliente(request, tipo, pk):
     # Reaproveitamos o mesmo template de formulário!
     return render(request, "cadastro/form.html", context)
 
+
+def mapear_colunas(colunas):
+    """Mapeia cabeçalhos comuns para os nomes internos: nome, preco, quantidade, categorias."""
+    mapeamento = {}
+    # Guarda possíveis colunas de preço para decidir depois
+    precos_candidatos = []
+    
+    for col in colunas:
+        col_lower = col.lower().strip()
+        if any(p in col_lower for p in ['nome', 'produto', 'descricao', 'item', 'nome da']):
+            mapeamento['nome'] = col
+        elif 'preco' in col_lower or 'preço' in col_lower or 'price' in col_lower:
+            precos_candidatos.append(col)
+        elif any(p in col_lower for p in ['estoque', 'quantidade', 'qtd', 'stock', 'em estoque']):
+            mapeamento['quantidade'] = col
+        elif any(p in col_lower for p in ['categoria', 'categ', 'grupo', 'tipo']):
+            mapeamento['categorias'] = col
+    
+    # Decidir coluna de preço: prefere a que NÃO tenha 'promocional' ou 'comparativo'
+    for col in precos_candidatos:
+        col_lower = col.lower()
+        if 'promocional' not in col_lower and 'comparativo' not in col_lower:
+            mapeamento['preco'] = col
+            break
+    # Se não encontrou uma sem promoção, usa a primeira disponível
+    if 'preco' not in mapeamento and precos_candidatos:
+        mapeamento['preco'] = precos_candidatos[0]
+        
+    return mapeamento
+@login_required
+def importar_produtos(request):
+    if request.method == 'POST':
+        form = UploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            arquivo = request.FILES['arquivo']
+            try:
+                # Leitura robusta do arquivo
+                if arquivo.name.endswith('.csv'):
+                    conteudo = arquivo.read()
+                    try:
+                        df = pd.read_csv(BytesIO(conteudo), encoding='utf-8', engine='python', sep=None, on_bad_lines='skip')
+                    except (UnicodeDecodeError, pd.errors.ParserError):
+                        try:
+                            df = pd.read_csv(BytesIO(conteudo), encoding='latin-1', engine='python', sep=None, on_bad_lines='skip')
+                        except Exception as e:
+                            messages.error(request, f"Erro ao ler o CSV. Detalhes: {e}")
+                            return redirect('importar_produtos')
+                elif arquivo.name.endswith(('.xls', '.xlsx')):
+                    df = pd.read_excel(arquivo)
+                else:
+                    messages.error(request, "Formato de arquivo não suportado.")
+                    return redirect('importar_produtos')
+
+                # Mapeamento de colunas
+                colunas_obrigatorias = {'nome', 'preco', 'quantidade'}
+                mapeamento = mapear_colunas(df.columns)
+                if not colunas_obrigatorias.issubset(mapeamento.keys()):
+                    messages.error(request, f"Colunas obrigatórias não encontradas. Mapeadas: {list(mapeamento.keys())}")
+                    return redirect('importar_produtos')
+
+                df.rename(columns={v: k for k, v in mapeamento.items()}, inplace=True)
+                df = df[list(mapeamento.keys())]
+
+                produtos_criados = 0
+                produtos_atualizados = 0
+                linhas_ignoradas = 0
+
+                # Processamento linha a linha (sem transação atômica, para que erros em uma linha não impeçam as outras)
+                for index, row in df.iterrows():
+                    nome = str(row['nome']).strip() if pd.notna(row['nome']) else ''
+                    preco = row['preco']
+                    quantidade = row['quantidade']
+
+                    # Validações mínimas
+                    if not nome:
+                        linhas_ignoradas += 1
+                        continue
+
+                    if pd.isna(preco):
+                        linhas_ignoradas += 1
+                        continue
+                    try:
+                        preco = float(str(preco).replace(',', '.'))
+                        if preco < 0:
+                            raise ValueError
+                    except (ValueError, TypeError):
+                        linhas_ignoradas += 1
+                        continue
+
+                    if pd.isna(quantidade):
+                        linhas_ignoradas += 1
+                        continue
+                    try:
+                        quantidade = int(float(str(quantidade).replace(',', '.')))
+                        if quantidade < 0:
+                            raise ValueError
+                    except (ValueError, TypeError):
+                        linhas_ignoradas += 1
+                        continue
+
+                    # Categorias (opcional)
+                    categorias_nomes = []
+                    if 'categorias' in df.columns:
+                        categorias_str = str(row['categorias']) if pd.notna(row['categorias']) else ''
+                        categorias_nomes = [c.strip() for c in categorias_str.split(',') if c.strip()]
+
+                    # Cria/atualiza produto
+                    produto, created = Produto.objects.update_or_create(
+                        nome_do_produto=nome.upper(),
+                        defaults={
+                            'preco': preco,
+                            'quantidade_estoque': quantidade
+                        }
+                    )
+                    if created:
+                        produtos_criados += 1
+                    else:
+                        produtos_atualizados += 1
+
+                    for cat_nome in categorias_nomes:
+                        categoria, _ = CategoriaProduto.objects.get_or_create(nome_da_categoria=cat_nome.title())
+                        produto.categorias.add(categoria)
+
+                # Feedback final
+                msg = f"Importação concluída! {produtos_criados} criados, {produtos_atualizados} atualizados."
+                if linhas_ignoradas > 0:
+                    msg += f" {linhas_ignoradas} linha(s) ignorada(s) por dados inválidos."
+                messages.success(request, msg)
+                return redirect('lista_produtos')
+
+            except Exception as e:
+                messages.error(request, f"Erro ao processar arquivo: {e}")
+                return redirect('importar_produtos')
+    else:
+        form = UploadFileForm()
+
+    return render(request, 'cadastro/importar_produtos.html', {'form': form})
